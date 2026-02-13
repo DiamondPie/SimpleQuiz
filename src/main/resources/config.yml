@@ -1,0 +1,49 @@
+# 每轮问答间隔的时间，单位秒，默认300（5分钟）
+interval: 300
+# 每轮问答持续的最大时间，单位秒，默认30
+duration: 30
+# 玩家回答错误时是否给予单独提示回答错误，默认false
+notifyWrongAnswer: false
+
+judge:
+  ansYes: "是"
+  ansNo: "否"
+
+fill:
+  - quiz: "这道题仅回答A才为正确答案"
+    answer:
+      type: text
+      value: [ "A" ]
+  - quiz: "这道题回答A或B为正确答案"
+    answer:
+      type: text
+      value: [ "A", "B" ]
+  - quiz: "这是一道判断题，回答配置中的ansYes内容即判为正确"
+    answer:
+      type: judge
+      value: true
+
+math:
+  chance: 0.5 # 每轮问题为数学运算题的概率
+  operator: # 运算符出现的数量
+    min: 1
+    max: 3
+  number: # 运算数字允许的范围
+    min: 1
+    max: 50
+
+prize:
+  item:
+    enable: true
+    # ItemStack的base64编码形式
+    base64: ""
+    # 若 base64 不为空则优先使用 base64，否则使用 id 构建基础物品
+    id: "minecraft:diamond"
+    amount:
+      min: 1
+      max: 3
+  economy: # 经济奖励
+    enable: true
+    amount:
+      min: 10
+      max: 50

@@ -1,0 +1,257 @@
+package com.diamondpie.simplequiz;
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitTask;
+
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+
+public class QuizManager {
+
+    private final Main plugin;
+    private boolean isRunning = false;
+    private final Set<String> currentAnswers = new HashSet<>();
+    private String currentQuestionText = "";
+    private BukkitTask timeoutTask;
+    private BukkitTask nextRoundTask;
+    private long nextRoundTime = 0;
+
+    public QuizManager(Main plugin) {
+        this.plugin = plugin;
+    }
+
+    public void reload() {
+        stopQuiz(null);
+        if (nextRoundTask != null) nextRoundTask.cancel();
+        plugin.reloadConfig();
+        scheduleNextRound();
+    }
+
+    public boolean isQuizRunning() {
+        return isRunning;
+    }
+
+    public boolean checkAnswer(Player player, String message) {
+        if (!isRunning) return false;
+
+        String cleanMsg = message.trim();
+        for (String ans : currentAnswers) {
+            if (ans.equalsIgnoreCase(cleanMsg)) {
+                handleCorrectAnswer(player);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public long getNextRoundTime() {
+        return nextRoundTime;
+    }
+
+    public void scheduleNextRound() {
+        if (nextRoundTask != null && !nextRoundTask.isCancelled()) {
+            nextRoundTask.cancel();
+        }
+        long interval = plugin.getConfig().getLong("interval", 300);
+        nextRoundTime = System.currentTimeMillis() + (interval * 1000);
+
+        nextRoundTask = Bukkit.getScheduler().runTaskLater(plugin, () -> startQuiz(null), interval * 20L);
+    }
+
+    public void startQuiz(String forcedType) {
+        if (isRunning) return;
+
+        // Determine Type
+        String type = forcedType;
+        if (type == null) {
+            double mathChance = plugin.getConfig().getDouble("math.chance", 0.5);
+            type = (ThreadLocalRandom.current().nextDouble() < mathChance) ? "math" : "text";
+        }
+
+        prepareQuestion(type);
+
+        isRunning = true;
+        // Broadcast Question
+        Component prefix = Component.text("[问答挑战] ", NamedTextColor.GOLD);
+        Component question = Component.text(currentQuestionText, NamedTextColor.YELLOW);
+        Bukkit.broadcast(prefix.append(question));
+        Bukkit.broadcast(Component.text("请直接在公屏输入答案", NamedTextColor.GRAY));
+
+        // Schedule Timeout
+        long duration = plugin.getConfig().getLong("duration", 30);
+        timeoutTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Component timeOutPrefix = Component.text("[问答挑战] ", NamedTextColor.GOLD);
+            Component msg = Component.text("本轮时间已到，无人回答正确", NamedTextColor.RED);
+            Component ansMsg = Component.text("正确答案是: " + String.join(" 或 ", currentAnswers), NamedTextColor.AQUA);
+            Bukkit.broadcast(timeOutPrefix.append(msg));
+            Bukkit.broadcast(timeOutPrefix.append(ansMsg));
+            stopQuiz(null);
+        }, duration * 20L);
+    }
+
+    private void prepareQuestion(String type) {
+        currentAnswers.clear();
+        FileConfiguration config = plugin.getConfig();
+
+        if ("math".equalsIgnoreCase(type)) {
+            generateMathQuestion(config);
+        } else {
+            generateTextQuestion(config);
+        }
+    }
+
+    private void generateTextQuestion(FileConfiguration config) {
+        List<Map<?, ?>> questions = config.getMapList("fill");
+        if (questions.isEmpty()) {
+            currentQuestionText = "配置文件中没有填空题";
+            currentAnswers.add("admin");
+            return;
+        }
+
+        Map<?, ?> q = questions.get(ThreadLocalRandom.current().nextInt(questions.size()));
+        currentQuestionText = (String) q.get("quiz");
+
+        Map<?, ?> answerSection = (Map<?, ?>) q.get("answer");
+        String ansType = (String) answerSection.get("type");
+
+        if ("judge".equalsIgnoreCase(ansType)) {
+            boolean boolVal = (Boolean) answerSection.get("value");
+            String key = boolVal ? "judge.ansYes" : "judge.ansNo";
+            currentAnswers.add(config.getString(key, boolVal ? "是" : "否"));
+        } else {
+            Object valueObj = answerSection.get("value");
+            if (valueObj instanceof List<?> rawList) {
+                for (Object obj : rawList) {
+                    if (obj instanceof String) {
+                        currentAnswers.add((String) obj);
+                    } else {
+                        currentAnswers.add(String.valueOf(obj));
+                    }
+                }
+            }
+        }
+    }
+
+    private void generateMathQuestion(FileConfiguration config) {
+        int minOp = config.getInt("math.operator.min", 1);
+        int maxOp = config.getInt("math.operator.max", 3);
+        int countOp = ThreadLocalRandom.current().nextInt(minOp, maxOp + 1);
+
+        int minNum = config.getInt("math.number.min", 0);
+        int maxNum = config.getInt("math.number.max", 99);
+
+        List<Integer> numbers = new ArrayList<>();
+        List<String> operators = new ArrayList<>();
+        String[] ops = {"+", "-", "*"};
+
+        for (int i = 0; i < countOp + 1; i++) {
+            numbers.add(ThreadLocalRandom.current().nextInt(minNum, maxNum + 1));
+        }
+        for (int i = 0; i < countOp; i++) {
+            operators.add(ops[ThreadLocalRandom.current().nextInt(ops.length)]);
+        }
+
+        // Build String
+        StringBuilder sb = new StringBuilder();
+        sb.append(numbers.getFirst());
+        for (int i = 0; i < operators.size(); i++) {
+            sb.append(" ").append(operators.get(i)).append(" ").append(numbers.get(i + 1));
+        }
+        currentQuestionText = "请计算: " + sb;
+
+        // Calculate Result
+        currentAnswers.add(String.valueOf(solveMath(numbers, operators)));
+    }
+
+    private int solveMath(List<Integer> numbers, List<String> operators) {
+        // Create mutable copies
+        List<Integer> nums = new ArrayList<>(numbers);
+        List<String> ops = new ArrayList<>(operators);
+
+        // Process * first
+        for (int i = 0; i < ops.size(); i++) {
+            if (ops.get(i).equals("*")) {
+                int val = nums.get(i) * nums.get(i + 1);
+                nums.set(i, val);
+                nums.remove(i + 1);
+                ops.remove(i);
+                i--;
+            }
+        }
+
+        // Process + and -
+        int result = nums.getFirst();
+        for (int i = 0; i < ops.size(); i++) {
+            String op = ops.get(i);
+            if (op.equals("+")) {
+                result += nums.get(i + 1);
+            } else {
+                result -= nums.get(i + 1);
+            }
+        }
+        return result;
+    }
+
+    private void handleCorrectAnswer(Player winner) {
+        Component prefix = Component.text("[问答挑战] ", NamedTextColor.GOLD);
+        Component msg = Component.text(winner.getName() + " 回答正确", NamedTextColor.GREEN);
+        Bukkit.broadcast(prefix.append(msg));
+
+        // 切换回主线程发放奖励
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            giveRewards(winner);
+            stopQuiz(winner);
+        });
+    }
+
+    private void giveRewards(Player p) {
+        FileConfiguration config = plugin.getConfig();
+
+        // Item Reward
+        if (config.getBoolean("prize.item.enable")) {
+            String base64 = config.getString("prize.item.base64");
+            ItemStack item = null;
+
+            if (base64 != null && !base64.isEmpty()) {
+                item = ItemUtil.itemStackFromBase64(base64, plugin.getLogger());
+            }
+
+            if (item == null) {
+                String id = config.getString("prize.item.id", "minecraft:diamond");
+                Material mat = Material.matchMaterial(id);
+                if (mat != null) item = new ItemStack(mat);
+            }
+
+            if (item != null) {
+                int min = config.getInt("prize.item.amount.min", 1);
+                int max = config.getInt("prize.item.amount.max", 1);
+                int amt = ThreadLocalRandom.current().nextInt(min, max + 1);
+                item.setAmount(amt);
+                p.getInventory().addItem(item);
+                p.sendMessage(Component.text("获得物品奖励 x" + amt, NamedTextColor.GREEN));
+            }
+        }
+
+        // Economy Reward
+        if (config.getBoolean("prize.economy.enable") && plugin.getEconomy() != null) {
+            int min = config.getInt("prize.economy.amount.min", 0);
+            int max = config.getInt("prize.economy.amount.max", 0);
+            double amount = ThreadLocalRandom.current().nextInt(min, max + 1);
+            plugin.getEconomy().depositPlayer(p, amount);
+            p.sendMessage(Component.text("获得金币奖励 " + amount, NamedTextColor.GREEN));
+        }
+    }
+
+    public void stopQuiz(Player winner) {
+        isRunning = false;
+        currentAnswers.clear();
+        if (timeoutTask != null) timeoutTask.cancel();
+        scheduleNextRound();
+    }
+}

@@ -1,0 +1,19 @@
+name: SimpleQuiz
+version: ${version}
+main: com.diamondpie.simplequiz.Main
+api-version: '1.21'
+authors: [ DiamondPie ]
+description: A Minecraft Bukkit plugin that allows you to add scheduled quiz to your server
+softdepend: [ Vault ]
+
+commands:
+  simplequiz:
+    description: 问答插件主命令
+    usage: /simplequiz [args]
+permissions:
+  simplequiz.use:
+    description: 允许查看问答信息
+    default: true
+  simplequiz.admin:
+    description: 允许管理问答插件
+    default: op
