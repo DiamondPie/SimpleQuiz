@@ -96,7 +96,7 @@ public class CommandSimpleQuiz implements CommandExecutor, TabCompleter {
         if (plugin.getQuizManager().isQuizRunning()) {
             timeStr = "进行中";
         } else if (diff <= 0) {
-            timeStr = "即将开始";
+            timeStr = "仍未开始";
         } else {
             timeStr = (diff / 1000) + "秒后";
         }

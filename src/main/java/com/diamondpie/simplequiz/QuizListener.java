@@ -6,6 +6,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public class QuizListener implements Listener {
 
@@ -40,5 +42,21 @@ public class QuizListener implements Listener {
                 e.getPlayer().sendMessage(Component.text("回答错误", NamedTextColor.RED));
             }
         }
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent e) {
+        // Make sure getOnlinePlayers is updated
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            plugin.getQuizManager().checkPlayerCount();
+        }, 1L);
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        // Make sure getOnlinePlayers is updated
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            plugin.getQuizManager().checkPlayerCount();
+        }, 1L);
     }
 }

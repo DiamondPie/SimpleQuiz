@@ -16,21 +16,57 @@ public class QuizManager {
 
     private final Main plugin;
     private boolean isRunning = false;
+    private boolean isPausedByPlayerCount = false;
+
     private final Set<String> currentAnswers = new HashSet<>();
     private String currentQuestionText = "";
+
     private BukkitTask timeoutTask;
     private BukkitTask nextRoundTask;
+
     private long nextRoundTime = 0;
 
     public QuizManager(Main plugin) {
         this.plugin = plugin;
+        checkPlayerCount();
     }
 
     public void reload() {
         stopQuiz(null);
         if (nextRoundTask != null) nextRoundTask.cancel();
         plugin.reloadConfig();
-        scheduleNextRound();
+
+        checkPlayerCount();
+        if (!isPausedByPlayerCount) {
+            scheduleNextRound();
+        }
+    }
+
+    public void checkPlayerCount() {
+        int min = plugin.getConfig().getInt("min-player", 5);
+        int current = Bukkit.getOnlinePlayers().size();
+        boolean shouldPause = current < min;
+
+        if (shouldPause && !isPausedByPlayerCount) {
+            // 状态改变：人数足够 -> 人数不足
+            isPausedByPlayerCount = true;
+            stopQuiz(null); // 停止当前问题
+            if (nextRoundTask != null) nextRoundTask.cancel(); // 取消下一轮调度
+            nextRoundTime = 0;
+
+            if (plugin.getConfig().getBoolean("broadcast-status")) {
+                Bukkit.broadcast(Component.text("[问答挑战] 在线人数不足 " + min + " 人，问答暂时停止", NamedTextColor.RED));
+            }
+
+        } else if (!shouldPause && isPausedByPlayerCount) {
+            // 状态改变：人数不足 -> 人数足够
+            isPausedByPlayerCount = false;
+            scheduleNextRound(); // 恢复调度
+
+            if (plugin.getConfig().getBoolean("broadcast-status")) {
+                Bukkit.broadcast(Component.text("[问答挑战] 在线人数已达标，问答即将恢复！", NamedTextColor.GREEN));
+            }
+        }
     }
 
     public boolean isQuizRunning() {
@@ -55,6 +91,8 @@ public class QuizManager {
     }
 
     public void scheduleNextRound() {
+        if (isPausedByPlayerCount) return;
+
         if (nextRoundTask != null && !nextRoundTask.isCancelled()) {
             nextRoundTask.cancel();
         }
@@ -252,6 +290,9 @@ public class QuizManager {
         isRunning = false;
         currentAnswers.clear();
         if (timeoutTask != null) timeoutTask.cancel();
-        scheduleNextRound();
+
+        if (!isPausedByPlayerCount) {
+            scheduleNextRound();
+        }
     }
 }

@@ -1,9 +1,17 @@
 # 每轮问答间隔的时间，单位秒，默认300（5分钟）
 interval: 300
+
 # 每轮问答持续的最大时间，单位秒，默认30
 duration: 30
+
 # 玩家回答错误时是否给予单独提示回答错误，默认false
 notifyWrongAnswer: false
+
+# 参与问答的最少在线人数，如果人数不足则暂停问答
+min-player: 5
+
+# 当人数满足或不满足 min-player 条件时，是否广播状态变更消息
+broadcast-status: true
 
 judge:
   ansYes: "是"
