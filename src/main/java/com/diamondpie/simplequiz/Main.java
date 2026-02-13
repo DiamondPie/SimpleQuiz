@@ -8,15 +8,12 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 public final class Main extends JavaPlugin {
-
-    private static Main instance;
     private Economy econ = null;
     private QuizManager quizManager;
     private static final Logger log = Logger.getLogger("SimpleQuiz");
 
     @Override
     public void onEnable() {
-        instance = this;
         saveDefaultConfig();
 
         // Setup Vault
@@ -58,10 +55,6 @@ public final class Main extends JavaPlugin {
         }
         econ = rsp.getProvider();
         return econ != null;
-    }
-
-    public static Main getInstance() {
-        return instance;
     }
 
     public Economy getEconomy() {
