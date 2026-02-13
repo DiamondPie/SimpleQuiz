@@ -88,19 +88,19 @@ public class CommandSimpleQuiz implements CommandExecutor, TabCompleter {
     private void sendInfo(CommandSender sender) {
         Component title = Component.text("--- SimpleQuiz Info ---", NamedTextColor.GOLD);
         sender.sendMessage(title);
-        sender.sendMessage(Component.text("版本: " + plugin.getPluginMeta().getVersion(), NamedTextColor.WHITE));
-        sender.sendMessage(Component.text("开发者: DiamondPie", NamedTextColor.WHITE));
+        sender.sendMessage(Component.text("版本: " + plugin.getPluginMeta().getVersion(), NamedTextColor.GREEN));
+        sender.sendMessage(Component.text("开发者: ", NamedTextColor.BLUE).append(Component.text(String.join(", ", plugin.getPluginMeta().getAuthors()), NamedTextColor.LIGHT_PURPLE)));
 
         long diff = plugin.getQuizManager().getNextRoundTime() - System.currentTimeMillis();
-        String timeStr;
+        Component statusComponent;
         if (plugin.getQuizManager().isQuizRunning()) {
-            timeStr = "进行中";
+            statusComponent = Component.text("进行中", NamedTextColor.GREEN);
         } else if (diff <= 0) {
-            timeStr = "仍未开始";
+            statusComponent = Component.text("仍未开始", NamedTextColor.RED);
         } else {
-            timeStr = (diff / 1000) + "秒后";
+            statusComponent = Component.text(diff / 1000, NamedTextColor.LIGHT_PURPLE).append(Component.text("秒后", NamedTextColor.AQUA));
         }
-        sender.sendMessage(Component.text("下一轮: " + timeStr, NamedTextColor.AQUA));
+        sender.sendMessage(Component.text("下一轮: ", NamedTextColor.AQUA).append(statusComponent));
     }
 
     @Override
