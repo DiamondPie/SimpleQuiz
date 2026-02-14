@@ -1,10 +1,12 @@
 package com.diamondpie.simplequiz;
 
+import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Boss;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
@@ -23,8 +25,10 @@ public class QuizManager {
 
     private BukkitTask timeoutTask;
     private BukkitTask nextRoundTask;
+    private BukkitTask bossBarTask;
 
     private long nextRoundTime = 0;
+    private BossBar activeBossBar;
 
     public QuizManager(Main plugin) {
         this.plugin = plugin;
@@ -123,6 +127,34 @@ public class QuizManager {
 
         // Schedule Timeout
         long duration = plugin.getConfig().getLong("duration", 30);
+
+        if (plugin.getConfig().getBoolean("show-bossbar")) {
+            activeBossBar = BossBar.bossBar(
+                    Component.text("问答挑战倒计时：" + duration + "秒", NamedTextColor.YELLOW),
+                    1.0f,
+                    BossBar.Color.BLUE,
+                    BossBar.Overlay.PROGRESS
+            );
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                p.showBossBar(activeBossBar);
+            }
+
+            // Bossbar refresh task
+            final long startTime = System.currentTimeMillis();
+
+            bossBarTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+                if (!isRunning || activeBossBar == null) return;
+
+                long elapsedMillis = System.currentTimeMillis() - startTime;
+                float progress = 1.0f - ((float) elapsedMillis / (duration * 1000f));
+                long secondsLeft = Math.max(0, duration - (elapsedMillis / 1000) - 1);
+
+                progress = Math.max(0, progress);
+
+                activeBossBar.progress(progress);
+                activeBossBar.name(Component.text("问答挑战倒计时：" + secondsLeft + "秒", NamedTextColor.YELLOW));
+            }, 20L, 20L);
+        }
         timeoutTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
             Component timeOutPrefix = Component.text("[问答挑战] ", NamedTextColor.GOLD);
             Component msg = Component.text("本轮时间已到，无人回答正确", NamedTextColor.RED);
@@ -290,6 +322,18 @@ public class QuizManager {
         isRunning = false;
         currentAnswers.clear();
         if (timeoutTask != null) timeoutTask.cancel();
+
+        // Clear Bossbar
+        if (bossBarTask != null) {
+            bossBarTask.cancel();
+            bossBarTask = null;
+        }
+        if (activeBossBar != null) {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                p.hideBossBar(activeBossBar);
+            }
+            activeBossBar = null;
+        }
 
         if (!isPausedByPlayerCount) {
             scheduleNextRound();

@@ -13,6 +13,9 @@ min-player: 5
 # 当人数满足或不满足 min-player 条件时，是否广播状态变更消息
 broadcast-status: true
 
+# 是否显示倒计时 BossBar
+show-bossbar: true
+
 judge:
   ansYes: "是"
   ansNo: "否"
