@@ -40,7 +40,7 @@ public final class Main extends JavaPlugin {
     @Override
     public void onDisable() {
         if (this.quizManager != null) {
-            this.quizManager.stopQuiz(null); // Cleanup
+            this.quizManager.stopQuiz(null, true); // Cleanup
         }
         getLogger().info("SimpleQuiz 已卸载");
     }

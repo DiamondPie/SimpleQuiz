@@ -37,7 +37,7 @@ public class QuizManager {
     }
 
     public void reload() {
-        stopQuiz(null);
+        stopQuiz(null, true);
         if (nextRoundTask != null) nextRoundTask.cancel();
         plugin.reloadConfig();
 
@@ -55,7 +55,7 @@ public class QuizManager {
         if (shouldPause && !isPausedByPlayerCount) {
             // 状态改变：人数足够 -> 人数不足
             isPausedByPlayerCount = true;
-            stopQuiz(null); // 停止当前问题
+            stopQuiz(null, true); // 停止当前问题
             if (nextRoundTask != null) nextRoundTask.cancel(); // 取消下一轮调度
             nextRoundTime = 0;
 
@@ -170,7 +170,7 @@ public class QuizManager {
             Component ansMsg = Component.text("正确答案是: " + String.join(" 或 ", currentAnswers), NamedTextColor.AQUA);
             Bukkit.broadcast(timeOutPrefix.append(msg));
             Bukkit.broadcast(timeOutPrefix.append(ansMsg));
-            stopQuiz(null);
+            stopQuiz(null, false);
         }, duration * 20L);
     }
 
@@ -310,7 +310,7 @@ public class QuizManager {
         // 切换回主线程发放奖励
         Bukkit.getScheduler().runTask(plugin, () -> {
             giveRewards(winner);
-            stopQuiz(winner);
+            stopQuiz(winner, false);
         });
     }
 
@@ -352,7 +352,7 @@ public class QuizManager {
         }
     }
 
-    public void stopQuiz(Player winner) {
+    public void stopQuiz(Player winner, Boolean mute) {
         isRunning = false;
         currentAnswers.clear();
         if (timeoutTask != null) timeoutTask.cancel();
@@ -370,7 +370,7 @@ public class QuizManager {
         }
 
         // Broadcast sound
-        if (winner != null) {
+        if (!mute && winner != null) {
             broadcastSound(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
         } else {
             broadcastSound(Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.5f);
