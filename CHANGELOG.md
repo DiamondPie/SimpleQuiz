@@ -1,0 +1,3 @@
+- Add minimum player limit for quiz
+- Beautify `/simplequiz` description menu texts
+- Fix potential security issues related to leaked plugin instances
