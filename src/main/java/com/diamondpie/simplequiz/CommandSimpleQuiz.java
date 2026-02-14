@@ -7,6 +7,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ public class CommandSimpleQuiz implements CommandExecutor, TabCompleter {
             case "reload":
                 plugin.getQuizManager().reload();
                 sender.sendMessage(Component.text("配置已重载", NamedTextColor.GREEN));
+                validatePrizeConfig(sender);
                 break;
             case "start":
                 if (plugin.getQuizManager().isQuizRunning()) {
@@ -104,6 +106,22 @@ public class CommandSimpleQuiz implements CommandExecutor, TabCompleter {
                 sender.sendMessage(Component.text("未知子命令", NamedTextColor.RED));
         }
         return true;
+    }
+
+    private void validatePrizeConfig(CommandSender sender) {
+        FileConfiguration config = plugin.getConfig();
+        if (config.getBoolean("prize.item.enable")) {
+            String base64 = config.getString("prize.item.base64");
+            if (base64 != null && !base64.isEmpty()) {
+                ItemStack item = ItemUtil.itemStackFromBase64(base64, plugin.getLogger());
+                if (item == null) {
+                    sender.sendMessage(Component.text("警告: 配置中的物品 Base64 无效或解码失败！", NamedTextColor.RED));
+                } else {
+                    Component itemName = item.displayName(); // Paper API 获取显示名称
+                    sender.sendMessage(Component.text("恭喜，你的 Base64 配置物品已生效: ", NamedTextColor.GREEN).append(itemName));
+                }
+            }
+        }
     }
 
     private void sendInfo(CommandSender sender) {
