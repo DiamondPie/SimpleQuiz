@@ -16,6 +16,9 @@ broadcast-status: true
 # 是否显示倒计时 BossBar
 show-bossbar: true
 
+# 是否禁用所有声音提示
+mute: false
+
 judge:
   ansYes: "是"
   ansNo: "否"

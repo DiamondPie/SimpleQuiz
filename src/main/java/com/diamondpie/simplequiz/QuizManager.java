@@ -6,7 +6,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Boss;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
@@ -124,6 +124,7 @@ public class QuizManager {
         Component question = Component.text(currentQuestionText, NamedTextColor.YELLOW);
         Bukkit.broadcast(prefix.append(question));
         Bukkit.broadcast(Component.text("请直接在公屏输入答案", NamedTextColor.GRAY));
+        broadcastSound(Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 1.2f);
 
         // Schedule Timeout
         long duration = plugin.getConfig().getLong("duration", 30);
@@ -153,6 +154,10 @@ public class QuizManager {
 
                 activeBossBar.progress(progress);
                 activeBossBar.name(Component.text("问答挑战倒计时：" + secondsLeft + "秒", NamedTextColor.YELLOW));
+
+                if (secondsLeft <= 5) {
+                    broadcastSound(Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.2f + 0.1f*(5-secondsLeft));
+                }
             }, 20L, 20L);
         }
         timeoutTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -335,8 +340,23 @@ public class QuizManager {
             activeBossBar = null;
         }
 
+        // Broadcast sound
+        if (winner != null) {
+            broadcastSound(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+        } else {
+            broadcastSound(Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.5f);
+        }
+
         if (!isPausedByPlayerCount) {
             scheduleNextRound();
+        }
+    }
+
+    public void broadcastSound(Sound sound, float volume, float pitch) {
+        if (plugin.getConfig().getBoolean("mute", false)) return;
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.playSound(player.getLocation(), sound, volume, pitch);
         }
     }
 }
