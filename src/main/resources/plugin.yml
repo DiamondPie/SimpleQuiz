@@ -3,7 +3,7 @@ version: ${version}
 main: com.diamondpie.simplequiz.Main
 api-version: '1.21'
 authors: [ DiamondPie ]
-description: A Minecraft Bukkit plugin that allows you to add scheduled quiz to your server
+description: A Minecraft Bukkit plugin that allows you to add scheduled quiz and prize to your server
 softdepend: [ Vault ]
 
 commands:
