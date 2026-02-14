@@ -30,20 +30,6 @@ judge:
   ansYes: "是"
   ansNo: "否"
 
-fill:
-  - quiz: "这道题仅回答A才为正确答案"
-    answer:
-      type: text
-      value: [ "A" ]
-  - quiz: "这道题回答A或B为正确答案"
-    answer:
-      type: text
-      value: [ "A", "B" ]
-  - quiz: "这是一道判断题，回答配置中的ansYes内容即判为正确"
-    answer:
-      type: judge
-      value: true
-
 math:
   chance: 0.5 # 每轮问题为数学运算题的概率
   operator: # 运算符出现的数量
@@ -74,3 +60,17 @@ prize:
     amount:
       min: 10
       max: 50
+
+fill:
+  - quiz: "这道题仅回答A才为正确答案"
+    answer:
+      type: text
+      value: [ "A" ]
+  - quiz: "这道题回答A或B为正确答案"
+    answer:
+      type: text
+      value: [ "A", "B" ]
+  - quiz: "这是一道判断题，回答配置中的ansYes内容即判为正确"
+    answer:
+      type: judge
+      value: true
