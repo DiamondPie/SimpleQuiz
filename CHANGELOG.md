@@ -1,10 +1,7 @@
-# SimpleQuiz v2.0
+# SimpleQuiz v2.1
 
-- Add an optional bossbar to visualize the quiz countdown
-- Add optional sounds to quiz event
-- Rename `notifyWrongAnswer` to `notify-wrong-answer` in config key
-- Add config option `hide-correct` determines whether to hide the correct answer sent by player
-- Improves logic related to judge questions
-- Add optional easy multiplier for better math quiz *experience*
-- Add duration parameter in `/simplequiz start` command
-- Add base64 encoded itemstack validation after executing `/simplequiz reload`
+- Update `config.yml` template
+- Make reload message broadcasted
+- Fix the problem of unexpected sound when reload or disabled
+- Adapt ticks in tasks to server's average tps
+  This would be reconstructed in the future to make it based on reality time
