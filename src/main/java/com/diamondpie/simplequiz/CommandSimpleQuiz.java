@@ -3,6 +3,7 @@ package com.diamondpie.simplequiz;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -45,12 +46,12 @@ public class CommandSimpleQuiz implements CommandExecutor, TabCompleter {
         switch (sub) {
             case "reload":
                 plugin.getQuizManager().reload();
-                sender.sendMessage(Component.text("配置已重载", NamedTextColor.GREEN));
+                Bukkit.broadcast(Component.text("[问答挑战] 配置已重载", NamedTextColor.GREEN));
                 validatePrizeConfig(sender);
                 break;
             case "start":
                 if (plugin.getQuizManager().isQuizRunning()) {
-                    sender.sendMessage(Component.text("当前已有问答正在进行中", NamedTextColor.RED));
+                    sender.sendMessage(Component.text("[问答挑战] 当前已有问答正在进行中！", NamedTextColor.RED));
                     return true;
                 }
 
