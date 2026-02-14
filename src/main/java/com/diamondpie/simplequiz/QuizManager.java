@@ -370,10 +370,12 @@ public class QuizManager {
         }
 
         // Broadcast sound
-        if (!mute && winner != null) {
-            broadcastSound(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
-        } else {
-            broadcastSound(Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.5f);
+        if (!mute) {
+            if (winner != null) {
+                broadcastSound(Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+            } else {
+                broadcastSound(Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.5f);
+            }
         }
 
         if (!isPausedByPlayerCount) {
