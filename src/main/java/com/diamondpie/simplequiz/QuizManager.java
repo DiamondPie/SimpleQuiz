@@ -337,8 +337,13 @@ public class QuizManager {
                 int max = config.getInt("prize.item.amount.max", 1);
                 int amt = ThreadLocalRandom.current().nextInt(min, max + 1);
                 item.setAmount(amt);
-                p.getInventory().addItem(item);
-                p.sendMessage(Component.text("获得物品奖励 x" + amt, NamedTextColor.GREEN));
+                var leftovers = p.getInventory().addItem(item);
+                if (leftovers.isEmpty()) {
+                    p.sendMessage(Component.text("获得物品奖励 x" + amt, NamedTextColor.GREEN));
+                } else {
+                    leftovers.values().forEach(leftItem -> p.getWorld().dropItemNaturally(p.getLocation(), leftItem));
+                    p.sendMessage(Component.text("你的物品栏已满！多余的奖励已掉落在你脚下！", NamedTextColor.GOLD));
+                }
             }
         }
 
