@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'maven-publish'
     id("xyz.jpenilla.run-paper") version "2.3.1"
 }
 
@@ -57,5 +58,37 @@ processResources {
     filteringCharset 'UTF-8'
     filesMatching('plugin.yml') {
         expand props
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = project.group
+            artifactId = project.name
+            version = project.version
+
+            pom {
+                name.set(project.name)
+                description.set("A Minecraft Bukkit plugin that allows you to add scheduled quiz and prize to your server")
+                url.set("https://github.com/DiamondPie/SimpleQuiz")
+
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                    }
+                }
+
+                developers {
+                    developer {
+                        id.set("diamondpie")
+                        name.set("DiamondPie")
+                    }
+                }
+            }
+        }
     }
 }

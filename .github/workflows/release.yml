@@ -28,10 +28,15 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-      - name: Upload JAR to Release
+      - name: Publish Maven metadata
+        run: ./gradlew publishToMavenLocal
+
+      - name: Upload JAR and POM to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/libs/*.jar
+          files: |
+            build/libs/*.jar
+            build/publications/mavenJava/pom-default.xml
           body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
