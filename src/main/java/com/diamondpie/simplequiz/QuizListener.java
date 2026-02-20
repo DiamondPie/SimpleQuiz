@@ -4,6 +4,7 @@ import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -24,16 +25,24 @@ public class QuizListener implements Listener {
 
         String msg = PlainTextComponentSerializer.plainText().serialize(e.message());
 
+        Player player = e.getPlayer();
+        boolean isBanned = plugin.getDataManager().isBanned(player.getUniqueId());
+
         // Check logic needs to run properly regarding sync/async if modifying world state,
         // but QuizManager logic for rewards schedules tasks to main thread.
-        boolean correct = quizManager.checkAnswer(e.getPlayer(), msg);
+        boolean correct = quizManager.checkAnswer(player, msg, isBanned);
+        if (correct && isBanned) {
+            player.sendMessage(Component.text("我们不接受作弊者的答案", NamedTextColor.RED));
+            e.setCancelled(true);
+            return;
+        }
 
         // If it is judge (and config said yes), hide both ansYes and ansNo
         if (plugin.getConfig().getBoolean("hide-judge-answer", true) &&
                 !quizManager.getJudgeHint().isEmpty() &&
                 (msg.equals(plugin.getConfig().getString("judge.ansYes")) || msg.equals(plugin.getConfig().getString("judge.ansNo")))
         ) {
-            e.getPlayer().sendMessage(Component.text("你正在回答一道判断题，你的回答不会显示在公屏！", NamedTextColor.GRAY));
+            player.sendMessage(Component.text("你正在回答一道判断题，你的回答不会显示在公屏！", NamedTextColor.GRAY));
             e.setCancelled(true);
             return;
         }
@@ -52,7 +61,7 @@ public class QuizListener implements Listener {
                 // If config true: "give separate hint".
                 // Since this is AsyncChatEvent, we shouldn't modify the event message for just one player easily without side effects.
                 // We send a separate message.
-                e.getPlayer().sendMessage(Component.text("很遗憾，回答错误", NamedTextColor.RED));
+                player.sendMessage(Component.text("很遗憾，回答错误", NamedTextColor.RED));
             }
         }
     }

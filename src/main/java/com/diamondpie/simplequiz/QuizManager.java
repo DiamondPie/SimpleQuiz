@@ -80,13 +80,13 @@ public class QuizManager {
 
     public String getJudgeHint() { return currentJudgeHint; }
 
-    public boolean checkAnswer(Player player, String message) {
+    public boolean checkAnswer(Player player, String message, Boolean isPlayerBanned) {
         if (!isRunning) return false;
 
         String cleanMsg = message.trim();
         for (String ans : currentAnswers) {
             if (ans.equalsIgnoreCase(cleanMsg)) {
-                handleCorrectAnswer(player);
+                if (!isPlayerBanned) handleCorrectAnswer(player);
                 return true;
             }
         }
@@ -300,11 +300,6 @@ public class QuizManager {
     }
 
     private void handleCorrectAnswer(Player winner) {
-        if (plugin.getDataManager().isBanned(winner.getUniqueId())) {
-            winner.sendMessage(Component.text("我们不接受作弊者的答案", NamedTextColor.RED));
-            return;
-        }
-
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             // Delay for 1 tick so the message falls below player's answer
             Component prefix = Component.text("[问答挑战] ", NamedTextColor.GOLD);
