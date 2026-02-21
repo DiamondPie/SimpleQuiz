@@ -1,3 +1,6 @@
-# SimpleQuiz v2.3
+# SimpleQuiz v2.4
 
-- Add bans and unbans to admins to prevent cheat players from answering
+- Plugin would now hide the answer from banned players
+- A MIT license is added to the project
+- Added `maven-publish` plugin into gradle to provide maven support
+- Added readme in both Chinese and English version
